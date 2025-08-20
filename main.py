@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles  # This import was already correct
 from sqlalchemy.orm import Session
 from typing import Optional
 import os
@@ -9,13 +10,19 @@ from app.database import connection
 from app.database.connection import get_db
 from app.models import attendance as models
 from app.routes import attendance, face_recognition, auth
-# Import the new dependency from auth_service
 from app.services.auth_service import try_get_current_user
 from app.config import HAAR_CASCADE_PATH
 
 templates = Jinja2Templates(directory="app/templates")
 models.Base.metadata.create_all(bind=connection.engine)
 app = FastAPI(title="Smart Presence")
+
+# --- MOUNT STATIC DIRECTORY (THIS IS THE FIX) ---
+# This line tells FastAPI that any URL starting with "/static"
+# should be served from the "app/static" folder on your disk.
+# It should be placed after `app = FastAPI(...)` and before your routes.
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 
 # Include Routers
 app.include_router(auth.router)
